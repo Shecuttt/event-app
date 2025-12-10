@@ -23,6 +23,7 @@ import EventDetailPage from "./pages/dashboard/EventDetailPage";
 import PublicEventPage from "./pages/public/PublicEventPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import LandingPage from "./pages/public/LandingPage";
+import { Spinner } from "./components/ui/spinner";
 
 // Protected route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -30,7 +31,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const loading = useAuthStore((state) => state.loading);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spinner />
+      </div>
+    );
   }
 
   if (!user) {
@@ -46,7 +51,11 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
   const loading = useAuthStore((state) => state.loading);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spinner />
+      </div>
+    );
   }
 
   if (user) {

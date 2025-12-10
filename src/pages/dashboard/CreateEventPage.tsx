@@ -30,12 +30,18 @@ const eventSchema = z.object({
   description: z.string().optional(),
   location: z.string().min(3, "Lokasi minimal 3 karakter"),
   date: z.date({ error: "Tanggal wajib diisi" }),
+  time: z
+    .string()
+    .regex(
+      /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
+      "Format waktu tidak valid (HH:MM)"
+    ),
   quota: z
     .number()
     .int()
-    .positive("Kuota harus positif")
+    .positive()
     .optional()
-    .or(z.literal(0)),
+    .or(z.nan().transform(() => undefined)),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -56,6 +62,7 @@ export default function CreateEventPage() {
     resolver: zodResolver(eventSchema),
     defaultValues: {
       quota: undefined,
+      time: "09:00",
     },
   });
 
@@ -211,7 +218,7 @@ export default function CreateEventPage() {
                   disabled={(date) =>
                     date < new Date(new Date().setHours(0, 0, 0, 0))
                   }
-                  initialFocus
+                  autoFocus
                   locale={localeId}
                 />
               </PopoverContent>
@@ -219,6 +226,23 @@ export default function CreateEventPage() {
             {errors.date && (
               <p className="text-sm text-red-600">{errors.date.message}</p>
             )}
+          </div>
+
+          {/* Time */}
+          <div className="space-y-2">
+            <Label htmlFor="time">
+              Waktu Event <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              {...register("time")}
+              id="time"
+              type="time"
+              className={errors.time ? "border-red-500" : ""}
+            />
+            {errors.time && (
+              <p className="text-sm text-red-600">{errors.time.message}</p>
+            )}
+            <p className="text-xs text-gray-500">Format: HH:MM (24 jam)</p>
           </div>
 
           {/* Quota */}
@@ -233,7 +257,6 @@ export default function CreateEventPage() {
               type="number"
               min="0"
               placeholder="100"
-              defaultValue={0}
             />
             <p className="text-xs text-gray-500">
               Opsional - kosongin kalo unlimited

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,6 +17,8 @@ import {
   XCircle,
   Copy,
   Download,
+  Keyboard,
+  QrCode,
 } from "lucide-react";
 import supabase from "@/utils/supabase";
 import { Button } from "@/components/ui/button";
@@ -27,6 +30,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Tables } from "@/types/database.types";
+import QRScanner from "@/components/QRScanner";
+import ManualCheckIn from "@/components/ManualCheckIn";
 
 type Event = Tables<"events">;
 type Participant = Tables<"participants">;
@@ -36,6 +41,12 @@ export default function EventDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [copySuccess, setCopySuccess] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [showManualCheckIn, setShowManualCheckIn] = useState(false);
+  const [checkInStatus, setCheckInStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   // Fetch event details
   const { data: event, isLoading: eventLoading } = useQuery({
@@ -75,9 +86,6 @@ export default function EventDetailPage() {
   };
 
   const handleDeleteEvent = async () => {
-    if (!confirm("Yakin mau hapus event ini? Data ga bisa dikembalikan."))
-      return;
-
     const { error } = await supabase
       .from("events")
       .delete()
@@ -135,6 +143,72 @@ export default function EventDetailPage() {
     a.href = url;
     a.download = `${event?.slug}-participants.csv`;
     a.click();
+  };
+
+  const handleCheckIn = async (
+    ticketId: string
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+      // Find participant by ticket ID
+      const participant = participants.find((p) => p.ticket_id === ticketId);
+
+      if (!participant) {
+        return {
+          success: false,
+          message: `Ticket ID ${ticketId} tidak ditemukan di event ini.`,
+        };
+      }
+
+      if (participant.attendance_status === "present") {
+        return {
+          success: false,
+          message: `${participant.name} udah check-in sebelumnya.`,
+        };
+      }
+
+      // Update attendance status
+      const { error } = await supabase
+        .from("participants")
+        .update({
+          attendance_status: "present",
+          checked_in_at: new Date().toISOString(),
+        })
+        .eq("id", participant.id);
+
+      if (error) throw error;
+
+      // Invalidate queries
+      await queryClient.invalidateQueries({ queryKey: ["participants", id] });
+      await queryClient.invalidateQueries({ queryKey: ["event", id] });
+
+      const successMessage = `✅ ${participant.name} berhasil check-in!`;
+
+      setCheckInStatus({
+        type: "success",
+        message: successMessage,
+      });
+
+      // Close modals
+      setShowScanner(false);
+      setShowManualCheckIn(false);
+
+      // Clear status after 3 seconds
+      setTimeout(() => setCheckInStatus(null), 3000);
+
+      return { success: true, message: successMessage };
+    } catch (err: any) {
+      const errorMessage = err.message || "Gagal check-in. Coba lagi.";
+
+      setCheckInStatus({
+        type: "error",
+        message: errorMessage,
+      });
+
+      return {
+        success: false,
+        message: errorMessage,
+      };
+    }
   };
 
   if (eventLoading) {
@@ -206,21 +280,21 @@ export default function EventDetailPage() {
             <Button onClick={handleCopyLink} variant="outline">
               {copySuccess ? (
                 <>
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Copied!
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span className="hidden md:block">Copied!</span>
                 </>
               ) : (
                 <>
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Share Link
+                  <Share2 className="h-4 w-4" />
+                  <span className="hidden md:block">Share Link</span>
                 </>
               )}
             </Button>
 
             <Link to={`/dashboard/events/${id}/edit`}>
               <Button variant="outline">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
+                <Edit className="h-4 w-4" />
+                <span className="hidden md:block">Edit Event</span>
               </Button>
             </Link>
 
@@ -352,6 +426,40 @@ export default function EventDetailPage() {
         </div>
       </div>
 
+      {/* Check-in Status Message */}
+      {checkInStatus && (
+        <div
+          className={`mb-6 rounded-lg border p-4 ${
+            checkInStatus.type === "success"
+              ? "bg-green-50 border-green-200 text-green-800"
+              : "bg-red-50 border-red-200 text-red-800"
+          }`}
+        >
+          <p className="font-medium">{checkInStatus.message}</p>
+        </div>
+      )}
+
+      {/* Check-in Actions */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">
+          Check-In Peserta
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Button onClick={() => setShowScanner(true)} className="w-full">
+            <QrCode className="h-4 w-4" />
+            Scan QR Code
+          </Button>
+          <Button
+            onClick={() => setShowManualCheckIn(true)}
+            variant="outline"
+            className="w-full"
+          >
+            <Keyboard className="h-4 w-4" />
+            Manual Check-In
+          </Button>
+        </div>
+      </div>
+
       {/* Participants List */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
@@ -360,7 +468,7 @@ export default function EventDetailPage() {
           </h2>
           {participants.length > 0 && (
             <Button onClick={handleExportCSV} variant="outline" size="sm">
-              <Download className="mr-2 h-4 w-4" />
+              <Download className="h-4 w-4" />
               Export CSV
             </Button>
           )}
@@ -446,6 +554,21 @@ export default function EventDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      {showScanner && (
+        <QRScanner
+          onScan={handleCheckIn}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
+
+      {showManualCheckIn && (
+        <ManualCheckIn
+          onSubmit={handleCheckIn}
+          onClose={() => setShowManualCheckIn(false)}
+        />
+      )}
     </div>
   );
 }

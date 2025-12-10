@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Tables } from "@/types/database.types";
 import supabase from "@/utils/supabase";
+import { QRCodeSVG } from "qrcode.react";
 
 type Event = Tables<"events">;
 
@@ -171,13 +172,19 @@ export default function PublicEventPage() {
           </h2>
           <p className="text-gray-600 mb-6">Lo udah terdaftar di event ini.</p>
 
+          {/* QR Code */}
+          <div className="bg-white border-2 border-gray-200 rounded-lg p-6 mb-6 inline-block">
+            <QRCodeSVG value={ticketId} size={200} level="H" marginSize={2} />
+          </div>
+
           <div className="bg-gray-50 rounded-lg p-6 mb-6">
             <p className="text-sm text-gray-600 mb-2">Ticket ID lo</p>
             <code className="text-2xl font-mono font-bold text-blue-600">
               {ticketId}
             </code>
             <p className="text-sm text-gray-500 mt-4">
-              Simpan ticket ID ini. Lo bakal butuh ini pas hari H buat check-in.
+              Screenshot QR code atau simpan ticket ID ini. Lo bakal butuh ini
+              pas hari H buat check-in.
             </p>
           </div>
 

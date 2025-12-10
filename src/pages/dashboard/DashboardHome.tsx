@@ -79,7 +79,6 @@ export default function DashboardHome() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-1">Hai! Ini overview event lo</p>
       </div>
 
       {/* Stats Cards */}
@@ -115,13 +114,13 @@ export default function DashboardHome() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold mb-2">Siap bikin event baru?</h2>
-            <p className="text-blue-100">
-              Setup event lo dalam hitungan menit dan langsung share ke audiens
+            <p className="text-blue-100 line-clamp-2 text-xs md:text-sm lg:text-base">
+              Buat event dalam hitungan menit dan langsung share ke audiens
             </p>
           </div>
           <Link to="/dashboard/events/new">
             <Button size="lg" variant="secondary">
-              <Plus className="mr-2 h-5 w-5" />
+              <Plus className="h-5 w-5" />
               Buat Event
             </Button>
           </Link>

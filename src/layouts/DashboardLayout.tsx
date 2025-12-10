@@ -1,13 +1,40 @@
+import { useState } from "react";
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
-import { Home, Calendar, LogOut } from "lucide-react";
-
+import { Home, Calendar, LogOut, Menu } from "lucide-react";
+import supabase from "@/utils/supabase";
 import { useAuthStore } from "@/stores/authStore";
-import supabase from "../utils/supabase";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarInset,
+} from "@/components/ui/sidebar";
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -20,56 +47,113 @@ export default function DashboardLayout() {
     );
   };
 
+  const menuItems = [
+    {
+      title: "Home",
+      icon: Home,
+      path: "/dashboard",
+      isActive: location.pathname === "/dashboard",
+    },
+    {
+      title: "Events",
+      icon: Calendar,
+      path: "/dashboard/events",
+      isActive: isActive("/dashboard/events"),
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">EventApp</h1>
-          <p className="text-sm text-gray-600 mt-1">{user?.email}</p>
-        </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        {/* Sidebar */}
+        <Sidebar>
+          <SidebarHeader className="border-b border-gray-200 p-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm">
+                I
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-gray-900">
+                  Ivento
+                </span>
+                <span className="text-xs text-gray-600 truncate">
+                  {user?.email}
+                </span>
+              </div>
+            </div>
+          </SidebarHeader>
 
-        <nav className="flex-1 p-4 space-y-2">
-          <Link
-            to="/dashboard"
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              isActive("/dashboard") && location.pathname === "/dashboard"
-                ? "bg-blue-50 text-blue-700"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <Home size={20} />
-            <span className="font-medium">Home</span>
-          </Link>
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {menuItems.map((item) => (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton asChild isActive={item.isActive}>
+                        <Link to={item.path}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
 
-          <Link
-            to="/dashboard/events"
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              isActive("/dashboard/events")
-                ? "bg-blue-50 text-blue-700"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <Calendar size={20} />
-            <span className="font-medium">Events</span>
-          </Link>
-        </nav>
+          <SidebarFooter className="border-t border-gray-200 p-4">
+            <AlertDialog
+              open={showLogoutDialog}
+              onOpenChange={setShowLogoutDialog}
+            >
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Logout dari akun lo?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Lo akan keluar dari dashboard dan harus login lagi buat
+                    akses.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleLogout}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Ya, Logout
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </SidebarFooter>
+        </Sidebar>
 
-        <div className="p-4 border-t border-gray-200">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors w-full"
-          >
-            <LogOut size={20} />
-            <span className="font-medium">Logout</span>
-          </button>
-        </div>
-      </aside>
+        {/* Main Content */}
+        <SidebarInset className="flex-1">
+          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-white px-6">
+            <SidebarTrigger className="lg:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SidebarTrigger>
+            <div className="flex-1" />
+          </header>
 
-      {/* Main content */}
-      <main className="ml-64 p-8">
-        <Outlet />
-      </main>
-    </div>
+          <main className="flex-1 p-6 md:p-8">
+            <Outlet />
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 }

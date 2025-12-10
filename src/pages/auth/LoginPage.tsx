@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-import { Mail, Lock, AlertCircle } from "lucide-react";
+import { Mail, Lock, AlertCircle, Eye, EyeClosed } from "lucide-react";
 import supabase from "@/utils/supabase";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,9 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const toggleShowPassword = () => setShowPassword(!showPassword);
 
   const {
     register,
@@ -105,10 +108,20 @@ export default function LoginPage() {
               <Input
                 {...register("password")}
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 className="w-full pl-10 pr-4 py-2"
               />
+              <Button
+                type="button"
+                variant="ghost"
+                size={"icon-sm"}
+                onClick={toggleShowPassword}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute top-1/2 right-2 -translate-y-1/2"
+              >
+                {showPassword ? <Eye /> : <EyeClosed />}
+              </Button>
             </div>
             {errors.password && (
               <p className="text-sm text-red-600">{errors.password.message}</p>

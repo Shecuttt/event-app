@@ -39,12 +39,18 @@ const eventSchema = z.object({
   description: z.string().optional(),
   location: z.string().min(3, "Lokasi minimal 3 karakter"),
   date: z.date({ error: "Tanggal wajib diisi" }),
+  time: z
+    .string()
+    .regex(
+      /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
+      "Format waktu tidak valid (HH:MM)"
+    ),
   quota: z
     .number()
     .int()
-    .positive("Kuota harus positif")
+    .positive()
     .optional()
-    .or(z.literal(0)),
+    .or(z.nan().transform(() => undefined)),
   status: z.enum(["active", "closed", "cancelled"]),
 });
 
@@ -86,6 +92,7 @@ export default function EditEventPage() {
           description: event.description || "",
           location: event.location || "",
           date: new Date(event.date),
+          time: format(new Date(event.date), "HH:mm"),
           quota: event.quota || undefined,
           status: event.status as "active" | "closed" | "cancelled",
         }
@@ -102,13 +109,18 @@ export default function EditEventPage() {
     setError(null);
 
     try {
+      // Combine date and time
+      const [hours, minutes] = data.time.split(":").map(Number);
+      const eventDateTime = new Date(data.date);
+      eventDateTime.setHours(hours, minutes, 0, 0);
+
       const { error: updateError } = await supabase
         .from("events")
         .update({
           title: data.title,
           description: data.description || null,
           location: data.location,
-          date: data.date.toISOString(),
+          date: eventDateTime.toISOString(),
           quota: data.quota || null,
           status: data.status,
           updated_at: new Date().toISOString(),
@@ -244,7 +256,7 @@ export default function EditEventPage() {
                   disabled={(date) =>
                     date < new Date(new Date().setHours(0, 0, 0, 0))
                   }
-                  initialFocus
+                  autoFocus
                   locale={localeId}
                 />
               </PopoverContent>
@@ -252,6 +264,23 @@ export default function EditEventPage() {
             {errors.date && (
               <p className="text-sm text-red-600">{errors.date.message}</p>
             )}
+          </div>
+
+          {/* Time */}
+          <div className="space-y-2">
+            <Label htmlFor="time">
+              Waktu Event <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              {...register("time")}
+              id="time"
+              type="time"
+              className={errors.time ? "border-red-500" : ""}
+            />
+            {errors.time && (
+              <p className="text-sm text-red-600">{errors.time.message}</p>
+            )}
+            <p className="text-xs text-gray-500">Format: HH:MM (24 jam)</p>
           </div>
 
           {/* Quota */}

@@ -4,7 +4,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import supabase from "@/utils/supabase";
-import { Mail, Lock, AlertCircle, CheckCircle } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  AlertCircle,
+  CheckCircle,
+  Eye,
+  EyeClosed,
+} from "lucide-react";
 import { CardHeader } from "@/components/ui/card";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import {
@@ -34,6 +41,12 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const toggleShowPassword = () => setShowPassword(!showPassword);
+  const toggleShowConfirmPassword = () =>
+    setShowConfirmPassword(!showConfirmPassword);
 
   const {
     register,
@@ -146,10 +159,20 @@ export default function RegisterPage() {
               <Input
                 {...register("password")}
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+              <Button
+                type="button"
+                variant="ghost"
+                size={"icon-sm"}
+                onClick={toggleShowPassword}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute top-1/2 right-2 -translate-y-1/2"
+              >
+                {showPassword ? <Eye /> : <EyeClosed />}
+              </Button>
             </div>
             {errors.password && (
               <p className="text-sm text-red-600 mt-1">
@@ -173,10 +196,22 @@ export default function RegisterPage() {
               <Input
                 {...register("confirmPassword")}
                 id="confirmPassword"
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
                 placeholder="••••••••"
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+              <Button
+                type="button"
+                variant="ghost"
+                size={"icon-sm"}
+                onClick={toggleShowConfirmPassword}
+                aria-label={
+                  showConfirmPassword ? "Hide password" : "Show password"
+                }
+                className="absolute top-1/2 right-2 -translate-y-1/2"
+              >
+                {showConfirmPassword ? <Eye /> : <EyeClosed />}
+              </Button>
             </div>
             {errors.confirmPassword && (
               <p className="text-sm text-red-600 mt-1">
