@@ -96,7 +96,7 @@ export default function RegisterPage() {
           Registrasi Berhasil!
         </h2>
         <p className="text-gray-600 mb-6">
-          Akun lo udah dibuat. Redirecting ke login...
+          Akun kamu udah dibuat. Redirecting ke login...
         </p>
       </div>
     );

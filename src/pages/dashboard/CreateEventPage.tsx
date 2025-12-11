@@ -131,7 +131,9 @@ export default function CreateEventPage() {
           Kembali
         </Button>
         <h1 className="text-3xl font-bold text-gray-900">Buat Event Baru</h1>
-        <p className="text-gray-600 mt-2">Isi detail event yang mau lo bikin</p>
+        <p className="text-gray-600 mt-2">
+          Isi detail event yang mau kamu bikin
+        </p>
       </div>
 
       {error && (
@@ -164,7 +166,7 @@ export default function CreateEventPage() {
             <Textarea
               {...register("description")}
               id="description"
-              placeholder="Jelaskan event lo secara singkat..."
+              placeholder="Jelaskan event kamu secara singkat..."
               rows={4}
               className="resize-none"
             />

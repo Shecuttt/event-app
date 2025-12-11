@@ -202,7 +202,7 @@ export default function EditEventPage() {
             <Textarea
               {...register("description")}
               id="description"
-              placeholder="Jelaskan event lo secara singkat..."
+              placeholder="Jelaskan event kamu secara singkat..."
               rows={4}
               className="resize-none"
             />

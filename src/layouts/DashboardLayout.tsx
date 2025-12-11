@@ -118,9 +118,9 @@ export default function DashboardLayout() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Logout dari akun lo?</AlertDialogTitle>
+                  <AlertDialogTitle>Logout dari akun kamu?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Lo akan keluar dari dashboard dan harus login lagi buat
+                    Kamu akan keluar dari dashboard dan harus login lagi buat
                     akses.
                   </AlertDialogDescription>
                 </AlertDialogHeader>

@@ -479,7 +479,7 @@ export default function EventDetailPage() {
             <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-600 mb-2">Belum ada peserta yang daftar</p>
             <p className="text-sm text-gray-500">
-              Share link event lo buat mulai terima pendaftar
+              Share link event ini buat mulai terima pendaftar
             </p>
           </div>
         ) : (

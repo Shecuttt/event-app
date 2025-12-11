@@ -250,7 +250,7 @@ export default function DashboardHome() {
             <Clock className="h-5 w-5 text-orange-600 shrink-0 mt-0.5" />
             <div>
               <h3 className="font-semibold text-orange-900 mb-1">
-                Lo punya {thisWeekEvents.length} event minggu ini!
+                Kamu punya {thisWeekEvents.length} event minggu ini!
               </h3>
               <p className="text-sm text-orange-800">
                 Jangan lupa persiapan dan cek daftar peserta sebelum hari H.

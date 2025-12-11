@@ -148,7 +148,7 @@ export default function PublicEventPage() {
           Event Tidak Ditemukan
         </h2>
         <p className="text-gray-600">
-          Link yang lo akses tidak valid atau event sudah dihapus.
+          Link yang diakses tidak valid atau event sudah dihapus.
         </p>
       </div>
     );
@@ -170,7 +170,9 @@ export default function PublicEventPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Registrasi Berhasil!
           </h2>
-          <p className="text-gray-600 mb-6">Lo udah terdaftar di event ini.</p>
+          <p className="text-gray-600 mb-6">
+            Kamu udah terdaftar di event ini.
+          </p>
 
           {/* QR Code */}
           <div className="bg-white border-2 border-gray-200 rounded-lg p-6 mb-6 inline-block">
@@ -178,24 +180,24 @@ export default function PublicEventPage() {
           </div>
 
           <div className="bg-gray-50 rounded-lg p-6 mb-6">
-            <p className="text-sm text-gray-600 mb-2">Ticket ID lo</p>
+            <p className="text-sm text-gray-600 mb-2">Ticket ID kamu</p>
             <code className="text-2xl font-mono font-bold text-blue-600">
               {ticketId}
             </code>
             <p className="text-sm text-gray-500 mt-4">
-              Screenshot QR code atau simpan ticket ID ini. Lo bakal butuh ini
+              Screenshot QR code atau simpan ticket ID ini. Kamu bakal butuh ini
               pas hari H buat check-in.
             </p>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          {/* <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
               <strong>📧 Cek email lo</strong> buat konfirmasi dan detail
               lengkap event.
               <br />
               Ga dapet email? Cek folder spam.
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     );
@@ -326,9 +328,7 @@ export default function PublicEventPage() {
               {errors.email && (
                 <p className="text-sm text-red-600">{errors.email.message}</p>
               )}
-              <p className="text-xs text-gray-500">
-                Opsional - buat nerima konfirmasi via email
-              </p>
+              <p className="text-xs text-gray-500">Opsional</p>
             </div>
 
             <div className="space-y-2">
@@ -343,9 +343,7 @@ export default function PublicEventPage() {
               {errors.phone && (
                 <p className="text-sm text-red-600">{errors.phone.message}</p>
               )}
-              <p className="text-xs text-gray-500">
-                Opsional - buat dihubungi panitia
-              </p>
+              <p className="text-xs text-gray-500">Opsional</p>
             </div>
 
             <Button type="submit" disabled={isSubmitting} className="w-full">

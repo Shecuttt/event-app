@@ -167,7 +167,7 @@ export default function EventsPage() {
             Belum Ada Event
           </h3>
           <p className="text-gray-600 mb-6">
-            Mulai bikin event pertama lo sekarang
+            Mulai bikin event pertamamu sekarang
           </p>
           <Link to="/dashboard/events/new">
             <Button>
