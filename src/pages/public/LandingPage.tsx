@@ -14,7 +14,7 @@ export default function LandingPage() {
       {/* Navbar */}
       <header className="w-full border-b">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="text-xl font-semibold">EventApp</div>
+          <div className="text-xl font-semibold">Ivento</div>
           <Link to="/login">
             <Button variant="ghost">Login</Button>
           </Link>
@@ -66,7 +66,7 @@ export default function LandingPage() {
 
       <footer className="py-6 border-t">
         <div className="max-w-5xl mx-auto px-6 text-sm text-gray-500">
-          © {new Date().getFullYear()} EventApp. All rights reserved.
+          © {new Date().getFullYear()} Ivento. All rights reserved.
         </div>
       </footer>
     </div>
