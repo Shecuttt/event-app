@@ -140,7 +140,7 @@ export default function LandingPage() {
                       Kontrol Penuh dari Satu Tempat
                     </h3>
                     <p className="text-gray-600 mb-6">
-                      Dashboard yang clean dan powerful. Liat semua event lo,
+                      Dashboard yang clean dan powerful. Liat semua event kamu,
                       track peserta, dan manage attendance dengan interface yang
                       intuitif.
                     </p>
@@ -261,7 +261,7 @@ export default function LandingPage() {
       <section className="py-20 bg-linear-to-br from-blue-600 to-blue-700">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Siap Bikin Event Pertama Lo?
+            Siap Bikin Event Pertama Kamu?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
             Setup dalam hitungan menit. Ga perlu setup ribet atau technical
