@@ -246,10 +246,10 @@ export default function EventDetailPage() {
           Kembali ke Events
         </Button>
 
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col md:flex-row items-start justify-between gap-2 md:gap-0">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
                 {event.title}
               </h1>
               <span
@@ -342,7 +342,7 @@ export default function EventDetailPage() {
       </div>
 
       {/* Event Info Card */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div className="flex items-start gap-3">
@@ -384,7 +384,7 @@ export default function EventDetailPage() {
                 <Link
                   to={publicLink}
                   target="_blank"
-                  className="font-medium text-blue-600 truncate text-sm"
+                  className="font-medium text-blue-600 text-wrap text-sm"
                 >
                   {publicLink}
                 </Link>
@@ -405,17 +405,17 @@ export default function EventDetailPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
           <p className="text-sm text-gray-600 mb-1">Total Pendaftar</p>
           <p className="text-3xl font-bold text-gray-900">{registeredCount}</p>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
           <p className="text-sm text-gray-600 mb-1">Sudah Hadir</p>
           <p className="text-3xl font-bold text-green-600">{attendedCount}</p>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
           <p className="text-sm text-gray-600 mb-1">Attendance Rate</p>
           <p className="text-3xl font-bold text-blue-600">
             {registeredCount > 0
@@ -440,7 +440,7 @@ export default function EventDetailPage() {
       )}
 
       {/* Check-in Actions */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6 mb-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">
           Check-In Peserta
         </h2>
@@ -462,7 +462,7 @@ export default function EventDetailPage() {
 
       {/* Participants List */}
       <div className="bg-white rounded-lg border border-gray-200">
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+        <div className="p-4 md:p-6 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-xl font-bold text-gray-900">
             Daftar Peserta ({registeredCount})
           </h2>

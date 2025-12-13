@@ -24,6 +24,8 @@ import PublicEventPage from "./pages/public/PublicEventPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import LandingPage from "./pages/public/LandingPage";
 import { Spinner } from "./components/ui/spinner";
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
 // Protected route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -111,6 +113,10 @@ function App() {
           }
         />
       </Route>
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+      {/* Reset password route (no layout, needs valid token) */}
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Protected dashboard routes */}
       <Route

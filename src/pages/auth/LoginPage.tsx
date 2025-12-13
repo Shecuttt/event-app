@@ -9,13 +9,9 @@ import supabase from "@/utils/supabase";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-  FieldSeparator,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { CardHeader } from "@/components/ui/card";
+import GoogleSignInButton from "@/components/auth/GoogleSignIn";
 
 const loginSchema = z.object({
   email: z.email("Email tidak valid"),
@@ -129,12 +125,21 @@ export default function LoginPage() {
           </Field>
         </FieldGroup>
 
-        <FieldSeparator className="my-4" />
+        <div className="my-4 text-right">
+          <Link
+            to="/forgot-password"
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Lupa password?
+          </Link>
+        </div>
 
         <Button type="submit" disabled={isLoading} className="w-full">
           {isLoading ? "Loading..." : "Login"}
         </Button>
       </form>
+
+      <GoogleSignInButton mode="signin" />
 
       <p className="text-center text-sm text-gray-600">
         Belum punya akun?{" "}

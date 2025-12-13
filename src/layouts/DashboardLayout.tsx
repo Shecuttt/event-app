@@ -29,15 +29,18 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "@/components/ui/sidebar";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    queryClient.clear();
     navigate("/login");
   };
 

@@ -74,11 +74,20 @@ export default function LandingPage() {
               Ivento
             </span>
           </div>
-          <Link to="/login">
-            <Button variant="ghost" className="font-medium">
-              Login
-            </Button>
-          </Link>
+          <div className="flex items-center gap-6">
+            {/* Desktop Menu */}
+            <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+              <a href="#features" className="hover:text-gray-900 transition">
+                Fitur
+              </a>
+            </nav>
+
+            <Link to="/login">
+              <Button className="font-medium bg-linear-to-r from-blue-600 to-blue-800 hover:from-blue-700">
+                Login
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -95,7 +104,7 @@ export default function LandingPage() {
               Kelola Event Tanpa Ribet
             </h1>
 
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
               Platform lengkap buat bikin event, manage peserta, dan handle
               check-in.
               <br />
@@ -109,7 +118,6 @@ export default function LandingPage() {
                   className="text-base px-8 shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-300 transition-all"
                 >
                   Mulai Gratis
-                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/login">
@@ -225,7 +233,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-20 bg-white">
+      <section id="features" className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -258,7 +266,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-linear-to-br from-blue-600 to-blue-700">
+      <section className="py-20 bg-linear-to-br from-blue-600 to-blue-800">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Siap Bikin Event Pertama Kamu?

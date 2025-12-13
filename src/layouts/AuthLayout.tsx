@@ -10,7 +10,7 @@ export default function AuthLayout() {
           <p className="text-gray-600 mt-2">Simple event management</p>
         </div>
 
-        <Card className="p-6">
+        <Card className="p-4 md:p-6">
           <Outlet />
         </Card>
 

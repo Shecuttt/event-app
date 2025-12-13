@@ -82,7 +82,7 @@ export default function DashboardHome() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           icon={<Calendar className="h-6 w-6" />}
           label="Total Events"
@@ -110,7 +110,7 @@ export default function DashboardHome() {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-linear-to-r from-blue-500 to-blue-600 rounded-lg p-6 mb-8 text-white">
+      <div className="bg-linear-to-r from-blue-500 to-blue-600 rounded-lg p-4 md:p-6 mb-8 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold mb-2">Siap bikin event baru?</h2>
@@ -129,7 +129,7 @@ export default function DashboardHome() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Upcoming Events */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-900">Upcoming Events</h2>
             <Link to="/dashboard/events">
@@ -191,7 +191,7 @@ export default function DashboardHome() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-900">Event Terbaru</h2>
           </div>
@@ -245,7 +245,7 @@ export default function DashboardHome() {
 
       {/* This Week's Events Highlight */}
       {thisWeekEvents.length > 0 && (
-        <div className="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-6">
+        <div className="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4 md:p-6">
           <div className="flex items-start gap-3">
             <Clock className="h-5 w-5 text-orange-600 shrink-0 mt-0.5" />
             <div>
@@ -283,14 +283,16 @@ function StatCard({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <div
-        className={`w-12 h-12 rounded-lg ${colorClasses[color]} flex items-center justify-center mb-4`}
-      >
-        {icon}
+    <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
+      <div className="flex justify-between">
+        <p className="text-5xl font-bold text-gray-900">{value}</p>
+        <div
+          className={`w-12 h-12 rounded-full ${colorClasses[color]} flex items-center justify-center mb-4`}
+        >
+          {icon}
+        </div>
       </div>
       <p className="text-sm text-gray-600 mb-1">{label}</p>
-      <p className="text-3xl font-bold text-gray-900">{value}</p>
     </div>
   );
 }

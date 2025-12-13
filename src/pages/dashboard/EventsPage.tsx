@@ -123,14 +123,14 @@ export default function EventsPage() {
         </div>
         <Link to="/dashboard/events/new">
           <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Buat Event
+            <Plus className="h-4 w-4" />
+            Baru
           </Button>
         </Link>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -250,7 +250,7 @@ function EventCard({
 
   return (
     <div
-      className={`bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow ${
+      className={`bg-white rounded-lg border border-gray-200 p-4 md:p-6 hover:shadow-md transition-shadow ${
         isPast ? "opacity-75" : ""
       }`}
     >

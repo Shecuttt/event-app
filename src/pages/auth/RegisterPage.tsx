@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import GoogleSignInButton from "@/components/auth/GoogleSignIn";
 
 const registerSchema = z
   .object({
@@ -103,8 +104,8 @@ export default function RegisterPage() {
   }
 
   return (
-    <div>
-      <CardHeader className="text-2xl text-center font-bold text-gray-900 mb-2">
+    <>
+      <CardHeader className="text-2xl text-center font-bold text-gray-900">
         Register
       </CardHeader>
 
@@ -115,15 +116,10 @@ export default function RegisterPage() {
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)}>
         <FieldGroup>
           <Field>
-            <FieldLabel
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Email
-            </FieldLabel>
+            <FieldLabel htmlFor="email">Email</FieldLabel>
             <div className="relative">
               <Mail
                 size={20}
@@ -134,23 +130,16 @@ export default function RegisterPage() {
                 id="email"
                 type="email"
                 placeholder="nama@email.com"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2"
               />
             </div>
             {errors.email && (
-              <p className="text-sm text-red-600 mt-1">
-                {errors.email.message}
-              </p>
+              <p className="text-sm text-red-600">{errors.email.message}</p>
             )}
           </Field>
 
           <Field>
-            <FieldLabel
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Password
-            </FieldLabel>
+            <FieldLabel htmlFor="password">Password</FieldLabel>
             <div className="relative">
               <Lock
                 size={20}
@@ -161,7 +150,7 @@ export default function RegisterPage() {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2"
               />
               <Button
                 type="button"
@@ -175,9 +164,7 @@ export default function RegisterPage() {
               </Button>
             </div>
             {errors.password && (
-              <p className="text-sm text-red-600 mt-1">
-                {errors.password.message}
-              </p>
+              <p className="text-sm text-red-600">{errors.password.message}</p>
             )}
           </Field>
 
@@ -198,7 +185,7 @@ export default function RegisterPage() {
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2"
               />
               <Button
                 type="button"
@@ -228,12 +215,14 @@ export default function RegisterPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-gray-600 mt-6">
+      <GoogleSignInButton mode="signup" />
+
+      <p className="text-center text-sm text-gray-600">
         Udah punya akun?{" "}
         <Link to="/login" className="text-blue-600 hover:underline font-medium">
           Login
         </Link>
       </p>
-    </div>
+    </>
   );
 }
