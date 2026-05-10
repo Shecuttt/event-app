@@ -12,7 +12,7 @@
 
 # testing
 /coverage
-bruno/*
+bruno/
 
 # next.js
 /.next/
