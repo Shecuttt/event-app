@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession, isOrganizer } from "@/src/lib/auth";
+import { requireAuth } from "@/src/lib/auth";
 import { getRegistrationById } from "@/src/db/queries/registrations";
 
 // ─── CACHE CONFIGURATION ──────────────────────────────────────────────────────
@@ -15,17 +15,10 @@ interface RouteParams {
 export async function GET(request: Request, { params }: RouteParams) {
   try {
     // 1. Auth required
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json(
-        { error: "Unauthorized - Anda harus login" },
-        { status: 401 }
-      );
-    }
+    const session = await requireAuth();
 
     const { id } = await params;
     const userId = session.user.id;
-    const userRole = session.user.role;
 
     // 2. Get registration details
     const registration = await getRegistrationById(id);
@@ -39,8 +32,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     // 3. Authorization check: Only owner or organizer of the event can access
     const isOwner = registration.userId === userId;
-    const isEventOrganizer =
-      userRole === "organizer" && registration.event.organizerId === userId;
+    const isEventOrganizer = registration.event.organizerId === userId;
 
     if (!isOwner && !isEventOrganizer) {
       return NextResponse.json(

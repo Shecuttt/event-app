@@ -5,19 +5,9 @@ import bcrypt from "bcryptjs";
 import { db } from "@/src/db";
 import { users } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
-import { signIn } from "@/auth";
+import { signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
-
-export const registerSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.enum(["participant", "organizer"], {
-    required_error: "Please select a role",
-  }),
-});
-
-export type RegisterInput = z.infer<typeof registerSchema>;
+import { registerSchema, type RegisterInput } from "@/src/lib/validations/auth";
 
 export async function registerUser(data: RegisterInput) {
   try {
@@ -40,7 +30,7 @@ export async function registerUser(data: RegisterInput) {
       name: validatedData.name,
       email: validatedData.email,
       passwordHash,
-      role: validatedData.role,
+      isOrganizer: false,
     });
 
     try {
@@ -62,5 +52,9 @@ export async function registerUser(data: RegisterInput) {
     }
     return { error: "Failed to register user. Please try again." };
   }
+}
+
+export async function signOutAction() {
+  await signOut({ redirectTo: "/" });
 }
 

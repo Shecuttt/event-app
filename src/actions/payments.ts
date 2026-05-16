@@ -29,7 +29,7 @@ export async function initiatePayment(
   // 1. Validasi user sudah login
   const session = await getSession();
   if (!session) {
-    throw new Error("Unauthorized - Anda harus login untuk mendaftar event");
+    throw new Error("Silakan login terlebih dahulu untuk mendaftar event");
   }
 
   const userId = session.user.id;
@@ -181,7 +181,7 @@ export async function initiatePayment(
 
     // 9. Panggil Midtrans untuk membuat transaksi
     // Split name into first and last name for Midtrans
-    const nameParts = user.name.split(" ");
+    const nameParts = (user.name ?? "User").split(" ");
     const firstName = nameParts[0] || "User";
     const lastName = nameParts.slice(1).join(" ") || undefined;
 

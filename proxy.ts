@@ -11,28 +11,31 @@ export async function proxy(req: NextRequest) {
   const publicRoutes = [
     "/",
     "/auth/signin",
+    "/auth/register",
     "/auth/error",
     "/api/auth",
-    "/api/v1/events", // GET /api/v1/events is public
   ];
 
   // Public API routes with specific methods
   const publicApiRoutes = [
-    { path: "/api/v1/events", method: "GET" },
-    { path: "/api/v1/transactions/webhook", method: "POST" },
+    { path: "/api/v1/events", method: "GET", exact: false }, // GET /api/v1/events and /api/v1/events/[id]
+    { path: "/api/v1/transactions/webhook", method: "POST", exact: true },
   ];
 
   // Check if it's a public API route with specific method
-  const isPublicApiRoute = publicApiRoutes.some(
-    (route) => pathname.startsWith(route.path) && req.method === route.method
-  );
+  const isPublicApiRoute = publicApiRoutes.some((route) => {
+    const isPathMatch = route.exact
+      ? pathname === route.path
+      : pathname.startsWith(route.path);
+    return isPathMatch && req.method === route.method;
+  });
 
   // Check if it's a public route
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
 
   // Protected routes
   const isProtectedRoute =
-    pathname.startsWith("/dashboard/") || pathname.startsWith("/api/v1/");
+    pathname.startsWith("/dashboard") || pathname.startsWith("/api/v1");
 
   // Allow access if it's public or authenticated
   if (isPublicRoute || isPublicApiRoute || !isProtectedRoute || isAuthenticated) {

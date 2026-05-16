@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     // Handle specific error types
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
-    if (errorMessage.includes("Unauthorized")) {
+    if (errorMessage.includes("Unauthorized") || errorMessage.includes("Silakan login")) {
       return NextResponse.json(
         { error: errorMessage },
         { status: 401 }

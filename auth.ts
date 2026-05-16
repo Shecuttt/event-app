@@ -4,12 +4,18 @@ import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/src/db";
-import { users } from "@/src/db/schema";
+import * as schema from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import type { DefaultSession } from "next-auth";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: DrizzleAdapter(db),
+  adapter: DrizzleAdapter(db, {
+    usersTable: schema.users,
+    accountsTable: schema.accounts,
+    sessionsTable: schema.sessions,
+    verificationTokensTable: schema.verificationTokens,
+    authenticatorsTable: schema.authenticators,
+  }),
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID!,
@@ -27,8 +33,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const user = await db
           .select()
-          .from(users)
-          .where(eq(users.email, credentials.email as string))
+          .from(schema.users)
+          .where(eq(schema.users.email, credentials.email as string))
           .limit(1);
 
         if (!user.length) {
@@ -55,7 +61,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: userRecord.id,
           email: userRecord.email,
           name: userRecord.name,
-          role: userRecord.role,
+          isOrganizer: userRecord.isOrganizer,
         };
       },
     }),
@@ -67,14 +73,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.isOrganizer = user.isOrganizer;
       }
+
+      if (token.email) {
+        const dbUser = await db.query.users.findFirst({
+          where: eq(schema.users.email, token.email),
+          columns: { id: true, isOrganizer: true },
+        });
+
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.isOrganizer = dbUser.isOrganizer;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
-        session.user.role = token.role as "participant" | "organizer";
+        session.user.isOrganizer = token.isOrganizer as boolean;
       }
       return session;
     },
@@ -91,16 +110,11 @@ declare module "next-auth" {
       id: string;
       email: string;
       name: string;
-      role: "participant" | "organizer";
+      isOrganizer: boolean;
     } & DefaultSession["user"];
   }
 
   interface User {
-    role: "participant" | "organizer";
-  }
-
-  interface JWT {
-    id: string;
-    role: "participant" | "organizer";
+    isOrganizer: boolean;
   }
 }

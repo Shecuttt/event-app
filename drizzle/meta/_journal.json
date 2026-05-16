@@ -8,6 +8,34 @@
       "when": 1778319963515,
       "tag": "0000_noisy_eddie_brock",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778824189539,
+      "tag": "0001_petite_fabian_cortez",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778831852991,
+      "tag": "0002_violet_lockheed",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778841529359,
+      "tag": "0003_open_madelyne_pryor",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778844962601,
+      "tag": "0004_nice_obadiah_stane",
+      "breakpoints": true
     }
   ]
 }

@@ -6,7 +6,7 @@ import {
   users,
   type Registration,
 } from "@/src/db/schema";
-import { eq, and, desc, asc, sql, SQL, count } from "drizzle-orm";
+import { eq, and, desc, sql, SQL } from "drizzle-orm";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -255,7 +255,10 @@ export async function getAttendeesByEvent(
   return {
     attendees: attendeesData.map(({ registration, user, ticketType }) => ({
       ...registration,
-      user,
+      user: {
+        ...user,
+        name: user.name ?? "Anonymous",
+      },
       ticketType,
     })),
     total,
@@ -291,7 +294,10 @@ export async function getAllAttendeesByEvent(
 
   return attendeesData.map(({ registration, user, ticketType }) => ({
     ...registration,
-    user,
+    user: {
+      ...user,
+      name: user.name ?? "Anonymous",
+    },
     ticketType,
   }));
 }

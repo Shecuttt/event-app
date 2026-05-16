@@ -1,5 +1,5 @@
 import { db } from "@/src/db";
-import { events, ticketTypes, users, type Event } from "@/src/db/schema";
+import { events, ticketTypes, users, registrations, transactions, type Event } from "@/src/db/schema";
 import { eq, and, desc, asc, sql, like, gte, lte, SQL } from "drizzle-orm";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -9,6 +9,7 @@ export interface EventFilters {
   limit?: number;
   search?: string;
   category?: string;
+  status?: string;
   locationType?: "offline" | "online";
   type?: "free" | "paid"; // free = all tickets price = 0, paid = any ticket price > 0
   dateFrom?: string; // ISO date string
@@ -142,7 +143,10 @@ export async function getPublishedEvents(
   // Filter by type (free/paid) if specified
   let resultEvents = eventsData.map(({ event, organizer }) => ({
     ...event,
-    organizer,
+    organizer: {
+      ...organizer,
+      name: organizer.name ?? "Unknown",
+    },
     ticketTypes: (ticketTypesByEvent.get(event.id) ?? []).map((tt) => ({
       id: tt.id,
       name: tt.name,
@@ -209,7 +213,10 @@ export async function getEventById(
 
   return {
     ...event,
-    organizer,
+    organizer: {
+      ...organizer,
+      name: organizer.name ?? "Unknown",
+    },
     ticketTypes: ticketTypesData,
   };
 }
@@ -225,6 +232,7 @@ export async function getOrganizerEvents(
     limit = 10,
     search,
     category,
+    status,
     locationType,
     dateFrom,
     dateTo,
@@ -242,6 +250,10 @@ export async function getOrganizerEvents(
 
   if (category) {
     conditions.push(eq(events.category, category as typeof events.category.enumValues[number]));
+  }
+
+  if (status) {
+    conditions.push(eq(events.status, status as typeof events.status.enumValues[number]));
   }
 
   if (locationType) {
@@ -318,7 +330,10 @@ export async function getOrganizerEvents(
   return {
     events: eventsData.map(({ event, organizer }) => ({
       ...event,
-      organizer,
+      organizer: {
+        ...organizer,
+        name: organizer.name ?? "Unknown",
+      },
       ticketTypes: (ticketTypesByEvent.get(event.id) ?? []).map((tt) => ({
         id: tt.id,
         name: tt.name,
@@ -361,4 +376,77 @@ export async function getEventWithOwnerCheck(
     ...event,
     ticketTypes: ticketTypesData,
   };
+}
+
+// ─── ORGANIZER DASHBOARD STATS ────────────────────────────────────────────────
+
+export async function getOrganizerStats(organizerId: string) {
+  // 1. Event counts by status
+  const eventCounts = await db
+    .select({
+      status: events.status,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(events)
+    .where(eq(events.organizerId, organizerId))
+    .groupBy(events.status);
+
+  const stats = {
+    published: 0,
+    draft: 0,
+    totalAttendees: 0,
+    totalRevenue: 0,
+  };
+
+  eventCounts.forEach((ec) => {
+    if (ec.status === "published") stats.published = ec.count;
+    if (ec.status === "draft") stats.draft = ec.count;
+  });
+
+  // 2. Total attendees (registrations for all organizer's events)
+  const attendeesCount = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(registrations)
+    .innerJoin(events, eq(registrations.eventId, events.id))
+    .where(eq(events.organizerId, organizerId));
+  
+  stats.totalAttendees = attendeesCount[0]?.count ?? 0;
+
+  // 3. Total revenue (sum of paid transactions for organizer's events)
+  const revenueSum = await db
+    .select({ total: sql<number>`sum(${transactions.amount})::int` })
+    .from(transactions)
+    .innerJoin(registrations, eq(transactions.registrationId, registrations.id))
+    .innerJoin(events, eq(registrations.eventId, events.id))
+    .where(
+      and(
+        eq(events.organizerId, organizerId),
+        eq(transactions.status, "paid")
+      )
+    );
+
+  stats.totalRevenue = revenueSum[0]?.total ?? 0;
+
+  return stats;
+}
+
+export async function getRecentOrganizerEvents(organizerId: string, limit = 5) {
+  const data = await db
+    .select({
+      id: events.id,
+      title: events.title,
+      status: events.status,
+      startAt: events.startAt,
+      attendeeCount: sql<number>`(
+        select count(*)::int 
+        from ${registrations} 
+        where ${registrations.eventId} = ${events.id}
+      )`,
+    })
+    .from(events)
+    .where(eq(events.organizerId, organizerId))
+    .orderBy(desc(events.createdAt))
+    .limit(limit);
+
+  return data;
 }

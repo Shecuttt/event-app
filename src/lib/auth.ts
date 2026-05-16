@@ -1,5 +1,8 @@
 import { auth } from "@/auth";
 import type { Session } from "next-auth";
+import { db } from "@/src/db";
+import { events, type Event } from "@/src/db/schema";
+import { eq } from "drizzle-orm";
 
 /**
  * Get the current session in server components
@@ -11,44 +14,40 @@ export async function getSession(): Promise<Session | null> {
 }
 
 /**
- * Require a specific role for access
- * Throws 403 error if user doesn't have required role
- * @param requiredRole The role required to access the resource
- * @param session Optional session parameter (if already fetched)
+ * Ensure user is authenticated
+ * Throws error if not authenticated
  */
-export async function requireRole(
-  requiredRole: "participant" | "organizer",
-  session?: Session | null
-): Promise<Session> {
-  const currentSession = session || (await auth());
+export async function requireAuth(): Promise<Session> {
+  const session = await auth();
 
-  if (!currentSession) {
-    throw new Error("Unauthorized - No session found");
+  if (!session) {
+    throw new Error("Silakan login terlebih dahulu untuk melanjutkan");
   }
 
-  if (currentSession.user.role !== requiredRole) {
-    throw new Error(
-      `Forbidden - Required role: ${requiredRole}, Current role: ${currentSession.user.role}`
-    );
-  }
-
-  return currentSession;
+  return session;
 }
 
 /**
- * Check if user has organizer role
- * @param session Optional session parameter (if already fetched)
+ * Ensure user is the owner of the event
+ * Throws 404 if event not found, 403 if not owner
  */
-export async function isOrganizer(session?: Session | null): Promise<boolean> {
-  const currentSession = session || (await auth());
-  return currentSession?.user.role === "organizer";
-}
+export async function requireEventOwner(
+  eventId: string,
+  userId: string
+): Promise<Event> {
+  const [event] = await db
+    .select()
+    .from(events)
+    .where(eq(events.id, eventId))
+    .limit(1);
 
-/**
- * Check if user has participant role
- * @param session Optional session parameter (if already fetched)
- */
-export async function isParticipant(session?: Session | null): Promise<boolean> {
-  const currentSession = session || (await auth());
-  return currentSession?.user.role === "participant";
+  if (!event) {
+    throw new Error("Event not found");
+  }
+
+  if (event.organizerId !== userId) {
+    throw new Error("Forbidden - You are not the owner of this event");
+  }
+
+  return event;
 }

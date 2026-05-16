@@ -1,9 +1,9 @@
 "use server";
 
 import { db } from "@/src/db";
-import { ticketTypes, events } from "@/src/db/schema";
-import { requireRole } from "@/src/lib/auth";
-import { eq, and } from "drizzle-orm";
+import { ticketTypes } from "@/src/db/schema";
+import { requireAuth, requireEventOwner } from "@/src/lib/auth";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -23,18 +23,10 @@ export interface UpdateTicketTypeInput {
 // ─── ADD TICKET TYPE ──────────────────────────────────────────────────────────
 
 export async function addTicketType(eventId: string, data: AddTicketTypeInput) {
-  const session = await requireRole("organizer");
+  const session = await requireAuth();
 
   // Check event ownership
-  const event = await db
-    .select()
-    .from(events)
-    .where(and(eq(events.id, eventId), eq(events.organizerId, session.user.id)))
-    .limit(1);
-
-  if (event.length === 0) {
-    throw new Error("Event tidak ditemukan atau Anda tidak memiliki akses");
-  }
+  await requireEventOwner(eventId, session.user.id);
 
   // Insert ticket type
   try {
@@ -64,29 +56,21 @@ export async function updateTicketType(
   ticketTypeId: string,
   data: UpdateTicketTypeInput
 ) {
-  const session = await requireRole("organizer");
+  const session = await requireAuth();
 
-  // Get ticket type with event check
-  const result = await db
-    .select({
-      ticketType: ticketTypes,
-      event: events,
-    })
+  // Get ticket type
+  const [ticketType] = await db
+    .select()
     .from(ticketTypes)
-    .innerJoin(events, eq(ticketTypes.eventId, events.id))
-    .where(
-      and(
-        eq(ticketTypes.id, ticketTypeId),
-        eq(events.organizerId, session.user.id)
-      )
-    )
+    .where(eq(ticketTypes.id, ticketTypeId))
     .limit(1);
 
-  if (result.length === 0) {
-    throw new Error("Tipe tiket tidak ditemukan atau Anda tidak memiliki akses");
+  if (!ticketType) {
+    throw new Error("Tipe tiket tidak ditemukan");
   }
 
-  const { ticketType, event } = result[0];
+  // Check ownership of the associated event
+  await requireEventOwner(ticketType.eventId, session.user.id);
 
   // Validasi: harga dan quota tidak bisa diubah jika sudah ada soldCount > 0
   if (ticketType.soldCount > 0) {
@@ -118,8 +102,8 @@ export async function updateTicketType(
       .set(updateData)
       .where(eq(ticketTypes.id, ticketTypeId));
 
-    revalidatePath(`/dashboard/events/${event.id}`);
-    revalidatePath(`/events/${event.id}`);
+    revalidatePath(`/dashboard/events/${ticketType.eventId}`);
+    revalidatePath(`/events/${ticketType.eventId}`);
     return { success: true };
   } catch (error) {
     console.error("Error updating ticket type:", error);
@@ -130,29 +114,21 @@ export async function updateTicketType(
 // ─── DELETE TICKET TYPE ───────────────────────────────────────────────────────
 
 export async function deleteTicketType(ticketTypeId: string) {
-  const session = await requireRole("organizer");
+  const session = await requireAuth();
 
-  // Get ticket type with event check
-  const result = await db
-    .select({
-      ticketType: ticketTypes,
-      event: events,
-    })
+  // Get ticket type
+  const [ticketType] = await db
+    .select()
     .from(ticketTypes)
-    .innerJoin(events, eq(ticketTypes.eventId, events.id))
-    .where(
-      and(
-        eq(ticketTypes.id, ticketTypeId),
-        eq(events.organizerId, session.user.id)
-      )
-    )
+    .where(eq(ticketTypes.id, ticketTypeId))
     .limit(1);
 
-  if (result.length === 0) {
-    throw new Error("Tipe tiket tidak ditemukan atau Anda tidak memiliki akses");
+  if (!ticketType) {
+    throw new Error("Tipe tiket tidak ditemukan");
   }
 
-  const { ticketType, event } = result[0];
+  // Check ownership of the associated event
+  await requireEventOwner(ticketType.eventId, session.user.id);
 
   // Validasi: hanya bisa hapus jika soldCount === 0
   if (ticketType.soldCount > 0) {
@@ -162,8 +138,8 @@ export async function deleteTicketType(ticketTypeId: string) {
   try {
     await db.delete(ticketTypes).where(eq(ticketTypes.id, ticketTypeId));
 
-    revalidatePath(`/dashboard/events/${event.id}`);
-    revalidatePath(`/events/${event.id}`);
+    revalidatePath(`/dashboard/events/${ticketType.eventId}`);
+    revalidatePath(`/events/${ticketType.eventId}`);
     return { success: true };
   } catch (error) {
     console.error("Error deleting ticket type:", error);

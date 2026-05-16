@@ -2,7 +2,7 @@
 
 import { db } from "@/src/db";
 import { registrations, events, ticketTypes } from "@/src/db/schema";
-import { getSession } from "@/src/lib/auth";
+import { requireAuth } from "@/src/lib/auth";
 import {
   getRegistrationByUserAndEvent,
   countRegistrationsByEvent,
@@ -30,11 +30,7 @@ export async function registerEvent(
   ticketTypeId: string
 ): Promise<RegistrationResult> {
   // 1. Validasi user sudah login
-  const session = await getSession();
-  if (!session) {
-    throw new Error("Unauthorized - Anda harus login untuk mendaftar event");
-  }
-
+  const session = await requireAuth();
   const userId = session.user.id;
 
   // 2. Validasi event exists, status "published", dan belum melewati endAt

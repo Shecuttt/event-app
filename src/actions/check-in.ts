@@ -2,7 +2,7 @@
 
 import { db } from "@/src/db";
 import { registrations } from "@/src/db/schema";
-import { requireRole } from "@/src/lib/auth";
+import { requireAuth } from "@/src/lib/auth";
 import { getRegistrationByQrCode } from "@/src/db/queries/registrations";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -28,8 +28,8 @@ export interface CheckInError {
 // ─── CHECK IN ATTENDEE ────────────────────────────────────────────────────────
 
 export async function checkInAttendee(qrCode: string): Promise<CheckInResult> {
-  // 1. Validasi user adalah organizer
-  const session = await requireRole("organizer");
+  // 1. Validasi user sudah login
+  const session = await requireAuth();
   const organizerId = session.user.id;
 
   // 2. Query registrasi berdasarkan qrCode
@@ -71,7 +71,7 @@ export async function checkInAttendee(qrCode: string): Promise<CheckInResult> {
       success: true,
       registrationId: registration.id,
       attendee: {
-        name: registration.user.name,
+        name: registration.user.name ?? "Anonymous",
         email: registration.user.email,
         ticketType: registration.ticketType.name,
       },

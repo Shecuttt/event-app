@@ -5,17 +5,19 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { registerSchema, RegisterInput, registerUser } from "@/src/actions/auth";
+import { signIn } from "next-auth/react";
+import { registerUser } from "@/src/actions/auth";
+import { registerSchema, type RegisterInput } from "@/src/lib/validations/auth";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Field, FieldLabel, FieldError, FieldContent } from "@/components/ui/field";
 
 export function RegisterForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const {
     control,
@@ -27,7 +29,6 @@ export function RegisterForm() {
       name: "",
       email: "",
       password: "",
-      role: "participant",
     },
   });
 
@@ -38,8 +39,14 @@ export function RegisterForm() {
     if (result.error) {
       setError(result.error);
     } else if (result.success) {
-      router.push("/dashboard");
+      router.push("/");
+      router.refresh();
     }
+  };
+
+  const loginWithGoogle = async () => {
+    setIsGoogleLoading(true);
+    await signIn("google", { callbackUrl: "/" });
   };
 
   return (
@@ -63,7 +70,7 @@ export function RegisterForm() {
               <Field>
                 <FieldLabel htmlFor="name">Name</FieldLabel>
                 <FieldContent>
-                  <Input id="name" placeholder="John Doe" disabled={isSubmitting} {...field} />
+                  <Input id="name" placeholder="John Doe" disabled={isSubmitting || isGoogleLoading} {...field} />
                 </FieldContent>
                 <FieldError errors={[{ message: errors.name?.message }]} />
               </Field>
@@ -81,7 +88,7 @@ export function RegisterForm() {
                     id="email"
                     type="email"
                     placeholder="m@example.com"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isGoogleLoading}
                     {...field}
                   />
                 </FieldContent>
@@ -100,7 +107,7 @@ export function RegisterForm() {
                   <Input
                     id="password"
                     type="password"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isGoogleLoading}
                     {...field}
                   />
                 </FieldContent>
@@ -109,40 +116,27 @@ export function RegisterForm() {
             )}
           />
 
-          <Controller
-            control={control}
-            name="role"
-            render={({ field }) => (
-              <Field>
-                <FieldLabel>Role</FieldLabel>
-                <FieldContent>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex flex-col space-y-1"
-                    disabled={isSubmitting}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="participant" id="participant" />
-                      <FieldLabel htmlFor="participant" className="font-normal">
-                        Participant
-                      </FieldLabel>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="organizer" id="organizer" />
-                      <FieldLabel htmlFor="organizer" className="font-normal">
-                        Event Organizer
-                      </FieldLabel>
-                    </div>
-                  </RadioGroup>
-                </FieldContent>
-                <FieldError errors={[{ message: errors.role?.message }]} />
-              </Field>
-            )}
-          />
-
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <Button type="submit" className="w-full" disabled={isSubmitting || isGoogleLoading}>
             {isSubmitting ? "Creating account..." : "Register"}
+          </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full"
+            onClick={loginWithGoogle}
+            disabled={isSubmitting || isGoogleLoading}
+          >
+            {isGoogleLoading ? "Connecting..." : "Google"}
           </Button>
 
           <div className="text-center text-sm mt-4">

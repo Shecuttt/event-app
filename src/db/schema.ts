@@ -1,9 +1,11 @@
 import { relations } from "drizzle-orm";
 import {
+  boolean,
   index,
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uuid,
@@ -11,8 +13,6 @@ import {
 } from "drizzle-orm/pg-core";
 
 // ─── ENUMS ────────────────────────────────────────────────────────────────────
-
-export const roleEnum = pgEnum("role", ["participant", "organizer"]);
 
 export const eventStatusEnum = pgEnum("event_status", [
   "draft",
@@ -49,14 +49,87 @@ export const transactionStatusEnum = pgEnum("transaction_status", [
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar("name", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }), // Nullable untuk Auth.js
   email: varchar("email", { length: 255 }).notNull().unique(),
-  passwordHash: varchar("password_hash", { length: 255 }), // nullable untuk OAuth-only user
-  role: roleEnum("role").notNull().default("participant"),
+  emailVerified: timestamp("email_verified", { mode: "date" }),
+  image: text("image"),
+  passwordHash: varchar("password_hash", { length: 255 }),
+  isOrganizer: boolean("is_organizer").notNull().default(false),
   avatarUrl: text("avatar_url"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const accounts = pgTable(
+  "accounts",
+  {
+    userId: uuid("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type").$type<"oauth" | "oidc" | "email">().notNull(),
+    provider: text("provider").notNull(),
+    providerAccountId: text("providerAccountId").notNull(),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: text("token_type"),
+    scope: text("scope"),
+    id_token: text("id_token"),
+    session_state: text("session_state"),
+  },
+  (account) => [
+    {
+      pk: primaryKey({
+        columns: [account.provider, account.providerAccountId],
+      }),
+    }
+  ]
+);
+
+export const sessions = pgTable("sessions", {
+  sessionToken: text("sessionToken").primaryKey(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expires: timestamp("expires", { mode: "date" }).notNull(),
+});
+
+export const verificationTokens = pgTable(
+  "verification_tokens",
+  {
+    identifier: text("identifier").notNull(),
+    token: text("token").notNull(),
+    expires: timestamp("expires", { mode: "date" }).notNull(),
+  },
+  (vt) => [
+    {
+      pk: primaryKey({ columns: [vt.identifier, vt.token] }),
+    }
+  ]
+);
+
+export const authenticators = pgTable(
+  "authenticators",
+  {
+    credentialID: text("credentialID").notNull().unique(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    providerAccountId: text("providerAccountId").notNull(),
+    credentialPublicKey: text("credentialPublicKey").notNull(),
+    counter: integer("counter").notNull(),
+    credentialDeviceType: text("credentialDeviceType").notNull(),
+    credentialBackedUp: boolean("credentialBackedUp").notNull(),
+    transports: text("transports"),
+  },
+  (authenticator) => [
+    {
+      pk: primaryKey({
+        columns: [authenticator.userId, authenticator.credentialID],
+      }),
+    }
+  ]
+);
 
 export const events = pgTable(
   "events",

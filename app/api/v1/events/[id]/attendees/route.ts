@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/src/lib/auth";
-import { getEventWithOwnerCheck } from "@/src/db/queries/events";
+import { requireAuth, requireEventOwner } from "@/src/lib/auth";
 import { getAttendeesByEvent } from "@/src/db/queries/registrations";
 
 // ─── CACHE CONFIGURATION ──────────────────────────────────────────────────────
@@ -15,21 +14,14 @@ interface RouteParams {
 
 export async function GET(request: Request, { params }: RouteParams) {
   try {
-    // 1. Auth required, role organizer
-    const session = await requireRole("organizer");
+    // 1. Auth required
+    const session = await requireAuth();
     const organizerId = session.user.id;
 
     const { id } = await params;
 
     // 2. Verify event exists and belongs to the organizer
-    const event = await getEventWithOwnerCheck(id, organizerId);
-
-    if (!event) {
-      return NextResponse.json(
-        { error: "Event tidak ditemukan atau Anda bukan pemilik event" },
-        { status: 404 }
-      );
-    }
+    await requireEventOwner(id, organizerId);
 
     // Parse query params
     const { searchParams } = new URL(request.url);
@@ -54,9 +46,9 @@ export async function GET(request: Request, { params }: RouteParams) {
     });
   } catch (error) {
     console.error("Error fetching event attendees:", error);
-    if (error instanceof Error && error.message.startsWith("Unauthorized")) {
+    if (error instanceof Error && (error.message.startsWith("Unauthorized") || error.message.includes("Silakan login"))) {
       return NextResponse.json(
-        { error: "Unauthorized - Anda harus login" },
+        { error: "Silakan login terlebih dahulu untuk melanjutkan" },
         { status: 401 }
       );
     }

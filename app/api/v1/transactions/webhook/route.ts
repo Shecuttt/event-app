@@ -3,7 +3,7 @@ import { db } from "@/src/db";
 import { transactions, registrations, ticketTypes } from "@/src/db/schema";
 import { verifyWebhookSignature, type WebhookPayload } from "@/src/lib/midtrans";
 import { getTransactionByMidtransOrderId } from "@/src/db/queries/transactions";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { randomBytes } from "crypto";
 
 // ─── POST /api/v1/transactions/webhook ────────────────────────────────────────

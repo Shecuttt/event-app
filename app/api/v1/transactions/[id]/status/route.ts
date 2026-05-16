@@ -19,7 +19,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     const session = await getSession();
     if (!session) {
       return NextResponse.json(
-        { error: "Unauthorized - Anda harus login" },
+        { error: "Silakan login terlebih dahulu untuk melanjutkan" },
         { status: 401 }
       );
     }

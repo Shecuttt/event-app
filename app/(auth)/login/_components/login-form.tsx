@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,12 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldError, FieldContent } from "@/components/ui/field";
 
-const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
-});
-
-type LoginInput = z.infer<typeof loginSchema>;
+import { loginSchema, type LoginInput } from "@/src/lib/validations/auth";
 
 export function LoginForm() {
   const router = useRouter();
@@ -46,16 +40,16 @@ export function LoginForm() {
     });
 
     if (result?.error) {
-      setError("Invalid email or password");
+      setError("Invalid email or password. Please try again.");
     } else {
-      router.push("/dashboard");
+      router.push("/");
       router.refresh();
     }
   };
 
   const loginWithGoogle = async () => {
     setIsGoogleLoading(true);
-    await signIn("google", { callbackUrl: "/dashboard" });
+    await signIn("google", { callbackUrl: "/" });
   };
 
   return (

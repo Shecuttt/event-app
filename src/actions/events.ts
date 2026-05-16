@@ -1,9 +1,8 @@
 "use server";
 
 import { db } from "@/src/db";
-import { events, ticketTypes, type NewEvent, eventCategoryEnum } from "@/src/db/schema";
-import { requireRole } from "@/src/lib/auth";
-import { getEventWithOwnerCheck } from "@/src/db/queries/events";
+import { events, ticketTypes, users, type NewEvent, eventCategoryEnum } from "@/src/db/schema";
+import { requireAuth, requireEventOwner } from "@/src/lib/auth";
 import { eq, and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -17,7 +16,7 @@ export interface CreateEventInput {
   locationDetail: string;
   startAt: string; // ISO string
   endAt: string; // ISO string
-  capacity: number | null;
+  capacity?: number | null;
   posterUrl?: string;
   ticketTypes: {
     name: string;
@@ -37,12 +36,18 @@ export interface UpdateEventInput {
   capacity?: number | null;
   posterUrl?: string;
   status?: "draft" | "published" | "cancelled" | "completed";
+  ticketTypes?: {
+    id?: string;
+    name: string;
+    price: number;
+    quota: number;
+  }[];
 }
 
 // ─── CREATE EVENT ─────────────────────────────────────────────────────────────
 
 export async function createEvent(data: CreateEventInput) {
-  const session = await requireRole("organizer");
+  const session = await requireAuth();
 
   // Validasi minimal 1 ticket type
   if (!data.ticketTypes || data.ticketTypes.length === 0) {
@@ -103,13 +108,10 @@ export async function createEvent(data: CreateEventInput) {
 // ─── UPDATE EVENT ─────────────────────────────────────────────────────────────
 
 export async function updateEvent(id: string, data: UpdateEventInput) {
-  const session = await requireRole("organizer");
+  const session = await requireAuth();
 
   // Check ownership
-  const existingEvent = await getEventWithOwnerCheck(id, session.user.id);
-  if (!existingEvent) {
-    throw new Error("Event tidak ditemukan atau Anda tidak memiliki akses");
-  }
+  const existingEvent = await requireEventOwner(id, session.user.id);
 
   // Validasi transisi status
   if (data.status) {
@@ -152,33 +154,77 @@ export async function updateEvent(id: string, data: UpdateEventInput) {
   if (data.status !== undefined) updateData.status = data.status as typeof events.status.enumValues[number];
 
   try {
-    await db
-      .update(events)
-      .set({
-        ...updateData,
-        updatedAt: new Date(),
-      })
-      .where(eq(events.id, id));
+    await db.transaction(async (tx) => {
+      // Update event
+      if (Object.keys(updateData).length > 0) {
+        await tx
+          .update(events)
+          .set({
+            ...updateData,
+            updatedAt: new Date(),
+          })
+          .where(eq(events.id, id));
+      }
+
+      // Sync ticket types if provided
+      if (data.ticketTypes) {
+        const existingTickets = await tx.select().from(ticketTypes).where(eq(ticketTypes.eventId, id));
+        const newTicketIds = data.ticketTypes.map(tt => tt.id).filter(Boolean) as string[];
+        
+        const ticketsToDelete = existingTickets.filter(tt => !newTicketIds.includes(tt.id));
+        if (ticketsToDelete.some(tt => tt.soldCount > 0)) {
+          throw new Error("Tidak bisa menghapus tipe tiket yang sudah memiliki penjualan");
+        }
+
+        if (ticketsToDelete.length > 0) {
+          await tx.delete(ticketTypes).where(and(eq(ticketTypes.eventId, id), sql`${ticketTypes.id} IN (${sql.join(ticketsToDelete.map(t => t.id), sql`, `)})`));
+        }
+
+        for (const tt of data.ticketTypes) {
+          if (tt.id) {
+            await tx.update(ticketTypes).set({
+              name: tt.name,
+              price: tt.price,
+              quota: tt.quota,
+            }).where(eq(ticketTypes.id, tt.id));
+          } else {
+            await tx.insert(ticketTypes).values({
+              eventId: id,
+              name: tt.name,
+              price: tt.price,
+              quota: tt.quota,
+              soldCount: 0,
+            });
+          }
+        }
+      }
+
+      // Trigger: if published and user is not yet marked as organizer, upgrade them
+      if (data.status === "published" && !session.user.isOrganizer) {
+        await tx
+          .update(users)
+          .set({ isOrganizer: true })
+          .where(eq(users.id, session.user.id));
+      }
+    });
 
     revalidatePath("/dashboard/events");
     revalidatePath(`/events/${id}`);
     return { success: true };
   } catch (error) {
     console.error("Error updating event:", error);
-    throw new Error("Gagal mengupdate event");
+    const message = error instanceof Error ? error.message : "Gagal mengupdate event";
+    throw new Error(message);
   }
 }
 
 // ─── DELETE EVENT ─────────────────────────────────────────────────────────────
 
 export async function deleteEvent(id: string) {
-  const session = await requireRole("organizer");
+  const session = await requireAuth();
 
   // Check ownership
-  const existingEvent = await getEventWithOwnerCheck(id, session.user.id);
-  if (!existingEvent) {
-    throw new Error("Event tidak ditemukan atau Anda tidak memiliki akses");
-  }
+  const existingEvent = await requireEventOwner(id, session.user.id);
 
   // Validasi hanya bisa hapus jika status draft
   if (existingEvent.status !== "draft") {
@@ -186,9 +232,10 @@ export async function deleteEvent(id: string) {
   }
 
   // Validasi soldCount semua ticketTypes = 0
-  const hasSoldTickets = existingEvent.ticketTypes.some(
-    (tt) => tt.soldCount > 0
-  );
+  // Note: existingEvent from requireEventOwner doesn't have ticketTypes by default in our helper, 
+  // but we should check it. Let's fetch ticket types here.
+  const tickets = await db.select().from(ticketTypes).where(eq(ticketTypes.eventId, id));
+  const hasSoldTickets = tickets.some((tt) => tt.soldCount > 0);
   if (hasSoldTickets) {
     throw new Error("Tidak bisa menghapus event yang sudah memiliki penjualan tiket");
   }

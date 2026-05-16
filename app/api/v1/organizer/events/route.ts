@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/src/lib/auth";
+import { requireAuth } from "@/src/lib/auth";
 import { getOrganizerEvents } from "@/src/db/queries/events";
 
 // ─── CACHE CONFIGURATION ──────────────────────────────────────────────────────
@@ -10,8 +10,8 @@ const CACHE_CONTROL = "private, no-store";
 
 export async function GET(request: Request) {
   try {
-    // 1. Auth required, role organizer
-    const session = await requireRole("organizer");
+    // 1. Auth required
+    const session = await requireAuth();
     const organizerId = session.user.id;
 
     // Parse query params
@@ -55,9 +55,9 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Error fetching organizer events:", error);
-    if (error instanceof Error && error.message.startsWith("Unauthorized")) {
+    if (error instanceof Error && (error.message.startsWith("Unauthorized") || error.message.includes("Silakan login"))) {
       return NextResponse.json(
-        { error: "Unauthorized - Anda harus login" },
+        { error: "Silakan login terlebih dahulu untuk melanjutkan" },
         { status: 401 }
       );
     }
