@@ -135,12 +135,22 @@ export function EventForm({ initialData, isEditing = false }: EventFormProps) {
   const onSubmit = async (data: EventInput) => {
     try {
       if (isEditing && initialData) {
-        await updateEvent(initialData.id, data);
+        const result = await updateEvent(initialData.id, data);
+        if (result && "error" in result) {
+          toast.error(result.error);
+          return;
+        }
         toast.success("Event berhasil diperbarui");
       } else {
         const result = await createEvent(data);
+        if (result && "error" in result) {
+          toast.error(result.error);
+          return;
+        }
         toast.success("Event berhasil dibuat");
-        router.push(`/dashboard/events/${result.eventId}/edit`);
+        if (result && "eventId" in result) {
+          router.push(`/dashboard/events/${result.eventId}/edit`);
+        }
       }
       router.refresh();
     } catch (error) {

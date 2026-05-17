@@ -48,7 +48,11 @@ export function TicketSection({ event }: TicketSectionProps) {
       if (selectedTicket.price === 0) {
         // Free Event Flow
         const result = await registerEvent(event.id, selectedTicketId);
-        if (result.success) {
+        if (result && "error" in result) {
+          toast.error(result.error);
+          return;
+        }
+        if (result && result.success) {
           setIsSuccess(true);
           toast.success("Berhasil mendaftar event!");
           router.refresh();
@@ -56,7 +60,11 @@ export function TicketSection({ event }: TicketSectionProps) {
       } else {
         // Paid Event Flow
         const result = await initiatePayment(event.id, selectedTicketId);
-        if (result.paymentUrl) {
+        if (result && "error" in result) {
+          toast.error(result.error);
+          return;
+        }
+        if (result && "paymentUrl" in result && result.paymentUrl) {
           toast.info("Mengarahkan ke halaman pembayaran...");
           window.location.href = result.paymentUrl;
         }

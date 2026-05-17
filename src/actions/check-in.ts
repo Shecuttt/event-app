@@ -27,35 +27,38 @@ export interface CheckInError {
 
 // ─── CHECK IN ATTENDEE ────────────────────────────────────────────────────────
 
-export async function checkInAttendee(qrCode: string): Promise<CheckInResult> {
-  // 1. Validasi user sudah login
-  const session = await requireAuth();
-  const organizerId = session.user.id;
-
-  // 2. Query registrasi berdasarkan qrCode
-  const registration = await getRegistrationByQrCode(qrCode);
-
-  // 3. Validasi registrasi ditemukan
-  if (!registration) {
-    throw new Error("NOT_FOUND - Registrasi tidak ditemukan");
-  }
-
-  // 4. Validasi eventId dari registrasi adalah event milik organizer yang sedang login
-  if (registration.event.organizerId !== organizerId) {
-    throw new Error(
-      "UNAUTHORIZED - Anda bukan organizer dari event terkait"
-    );
-  }
-
-  // 5. Validasi status belum "checked_in"
-  if (registration.status === "checked_in") {
-    throw new Error("ALREADY_CHECKED_IN - Peserta sudah melakukan check-in");
-  }
-
-  // 6. Update status ke "checked_in" dan set attendedAt ke waktu sekarang
-  const now = new Date();
-
+export async function checkInAttendee(
+  qrCode: string
+): Promise<CheckInResult | { success: false; error: string }> {
   try {
+    // 1. Validasi user sudah login
+    const session = await requireAuth();
+    const organizerId = session.user.id;
+
+    // 2. Query registrasi berdasarkan qrCode
+    const registration = await getRegistrationByQrCode(qrCode);
+
+    // 3. Validasi registrasi ditemukan
+    if (!registration) {
+      return { success: false, error: "Registrasi tidak ditemukan" };
+    }
+
+    // 4. Validasi eventId dari registrasi adalah event milik organizer yang sedang login
+    if (registration.event.organizerId !== organizerId) {
+      return {
+        success: false,
+        error: "Anda bukan organizer dari event terkait"
+      };
+    }
+
+    // 5. Validasi status belum "checked_in"
+    if (registration.status === "checked_in") {
+      return { success: false, error: "Peserta sudah melakukan check-in" };
+    }
+
+    // 6. Update status ke "checked_in" dan set attendedAt ke waktu sekarang
+    const now = new Date();
+
     await db
       .update(registrations)
       .set({
@@ -79,6 +82,9 @@ export async function checkInAttendee(qrCode: string): Promise<CheckInResult> {
     };
   } catch (error) {
     console.error("Error checking in attendee:", error);
-    throw new Error("SERVER_ERROR - Gagal melakukan check-in");
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Gagal melakukan check-in"
+    };
   }
 }

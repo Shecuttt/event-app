@@ -65,16 +65,15 @@ function ContextMenuGroup({ ...props }: ContextMenuPrimitive.Group.Props) {
     <ContextMenuPrimitive.Group data-slot="context-menu-group" {...props} />
   )
 }
-
 function ContextMenuLabel({
   className,
   inset,
   ...props
-}: ContextMenuPrimitive.GroupLabel.Props & {
+}: React.ComponentProps<"div"> & {
   inset?: boolean
 }) {
   return (
-    <ContextMenuPrimitive.GroupLabel
+    <div
       data-slot="context-menu-label"
       data-inset={inset}
       className={cn(

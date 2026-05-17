@@ -28,7 +28,11 @@ export function CheckinButton() {
     setIsLoading(true);
     try {
       const result = await checkInAttendee(qrCode);
-      if (result.success) {
+      if (result && "error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      if (result && result.success) {
         toast.success(`Berhasil check-in: ${result.attendee.name}`, {
           description: `Tiket: ${result.attendee.ticketType}`,
         });

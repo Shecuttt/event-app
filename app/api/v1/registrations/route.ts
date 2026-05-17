@@ -33,6 +33,23 @@ export async function POST(request: Request) {
     // Initiate payment flow for paid events
     const result = await initiatePayment(eventId, ticketTypeId);
 
+    if (result && "error" in result) {
+      const errorMessage = result.error;
+      let status = 400;
+
+      if (errorMessage.includes("Silakan login") || errorMessage.includes("Unauthorized")) {
+        status = 401;
+      } else if (errorMessage.includes("Event tidak ditemukan") || errorMessage.includes("not found")) {
+        status = 404;
+      } else if (errorMessage.includes("sudah terdaftar")) {
+        status = 409;
+      } else if (errorMessage.includes("Organizer tidak bisa mendaftar")) {
+        status = 403;
+      }
+
+      return NextResponse.json({ error: errorMessage }, { status });
+    }
+
     // Return payment URL for client-side redirect
     return NextResponse.json(
       {

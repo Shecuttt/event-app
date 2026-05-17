@@ -19,7 +19,11 @@ export function StatusButtons({ eventId, status }: StatusButtonsProps) {
   const handleUpdateStatus = async (newStatus: "published" | "cancelled") => {
     setIsPending(true);
     try {
-      await updateEvent(eventId, { status: newStatus });
+      const result = await updateEvent(eventId, { status: newStatus });
+      if (result && "error" in result) {
+        toast.error(result.error);
+        return;
+      }
       toast.success(`Event berhasil ${newStatus === "published" ? "dipublikasikan" : "dibatalkan"}`);
       router.refresh();
     } catch (error) {

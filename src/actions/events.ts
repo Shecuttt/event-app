@@ -46,24 +46,26 @@ export interface UpdateEventInput {
 
 // ─── CREATE EVENT ─────────────────────────────────────────────────────────────
 
-export async function createEvent(data: CreateEventInput) {
-  const session = await requireAuth();
-
-  // Validasi minimal 1 ticket type
-  if (!data.ticketTypes || data.ticketTypes.length === 0) {
-    throw new Error("Minimal harus ada 1 tipe tiket");
-  }
-
-  // Validasi endAt harus setelah startAt
-  const startAt = new Date(data.startAt);
-  const endAt = new Date(data.endAt);
-
-  if (endAt <= startAt) {
-    throw new Error("Waktu selesai harus setelah waktu mulai");
-  }
-
-  // Create event dengan transaction
+export async function createEvent(
+  data: CreateEventInput
+): Promise<{ success: true; eventId: string } | { success: false; error: string }> {
   try {
+    const session = await requireAuth();
+
+    // Validasi minimal 1 ticket type
+    if (!data.ticketTypes || data.ticketTypes.length === 0) {
+      return { success: false, error: "Minimal harus ada 1 tipe tiket" };
+    }
+
+    // Validasi endAt harus setelah startAt
+    const startAt = new Date(data.startAt);
+    const endAt = new Date(data.endAt);
+
+    if (endAt <= startAt) {
+      return { success: false, error: "Waktu selesai harus setelah waktu mulai" };
+    }
+
+    // Create event dengan transaction
     const result = await db.transaction(async (tx) => {
       // Insert event
       const [event] = await tx
@@ -101,59 +103,66 @@ export async function createEvent(data: CreateEventInput) {
     return { success: true, eventId: result.id };
   } catch (error) {
     console.error("Error creating event:", error);
-    throw new Error("Gagal membuat event");
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Gagal membuat event"
+    };
   }
 }
 
 // ─── UPDATE EVENT ─────────────────────────────────────────────────────────────
 
-export async function updateEvent(id: string, data: UpdateEventInput) {
-  const session = await requireAuth();
-
-  // Check ownership
-  const existingEvent = await requireEventOwner(id, session.user.id);
-
-  // Validasi transisi status
-  if (data.status) {
-    const validTransitions: Record<string, string[]> = {
-      draft: ["published", "cancelled"],
-      published: ["cancelled", "completed"],
-      cancelled: [],
-      completed: [], // Tidak bisa kembali dari completed
-    };
-
-    const allowedTransitions = validTransitions[existingEvent.status];
-    if (!allowedTransitions.includes(data.status)) {
-      throw new Error(
-        `Transisi status tidak valid: ${existingEvent.status} → ${data.status}`
-      );
-    }
-  }
-
-  // Validasi endAt harus setelah startAt jika keduanya diupdate
-  if (data.startAt || data.endAt) {
-    const startAt = data.startAt ? new Date(data.startAt) : existingEvent.startAt;
-    const endAt = data.endAt ? new Date(data.endAt) : existingEvent.endAt;
-
-    if (endAt <= startAt) {
-      throw new Error("Waktu selesai harus setelah waktu mulai");
-    }
-  }
-
-  // Build update data
-  const updateData: Partial<NewEvent> = {};
-  if (data.title !== undefined) updateData.title = data.title;
-  if (data.description !== undefined) updateData.description = data.description;
-  if (data.category !== undefined) updateData.category = data.category as typeof events.category.enumValues[number];
-  if (data.locationType !== undefined) updateData.locationType = data.locationType;
-  if (data.locationDetail !== undefined) updateData.locationDetail = data.locationDetail;
-  if (data.startAt !== undefined) updateData.startAt = new Date(data.startAt);
-  if (data.endAt !== undefined) updateData.endAt = new Date(data.endAt);
-  if (data.capacity !== undefined) updateData.capacity = data.capacity;
-  if (data.posterUrl !== undefined) updateData.posterUrl = data.posterUrl;
-  if (data.status !== undefined) updateData.status = data.status as typeof events.status.enumValues[number];
-
+export async function updateEvent(
+  id: string,
+  data: UpdateEventInput
+): Promise<{ success: true } | { success: false; error: string }> {
   try {
+    const session = await requireAuth();
+
+    // Check ownership
+    const existingEvent = await requireEventOwner(id, session.user.id);
+
+    // Validasi transisi status
+    if (data.status) {
+      const validTransitions: Record<string, string[]> = {
+        draft: ["published", "cancelled"],
+        published: ["cancelled", "completed"],
+        cancelled: [],
+        completed: [], // Tidak bisa kembali dari completed
+      };
+
+      const allowedTransitions = validTransitions[existingEvent.status];
+      if (!allowedTransitions.includes(data.status)) {
+        return {
+          success: false,
+          error: `Transisi status tidak valid: ${existingEvent.status} → ${data.status}`
+        };
+      }
+    }
+
+    // Validasi endAt harus setelah startAt jika keduanya diupdate
+    if (data.startAt || data.endAt) {
+      const startAt = data.startAt ? new Date(data.startAt) : existingEvent.startAt;
+      const endAt = data.endAt ? new Date(data.endAt) : existingEvent.endAt;
+
+      if (endAt <= startAt) {
+        return { success: false, error: "Waktu selesai harus setelah waktu mulai" };
+      }
+    }
+
+    // Build update data
+    const updateData: Partial<NewEvent> = {};
+    if (data.title !== undefined) updateData.title = data.title;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.category !== undefined) updateData.category = data.category as typeof events.category.enumValues[number];
+    if (data.locationType !== undefined) updateData.locationType = data.locationType;
+    if (data.locationDetail !== undefined) updateData.locationDetail = data.locationDetail;
+    if (data.startAt !== undefined) updateData.startAt = new Date(data.startAt);
+    if (data.endAt !== undefined) updateData.endAt = new Date(data.endAt);
+    if (data.capacity !== undefined) updateData.capacity = data.capacity;
+    if (data.posterUrl !== undefined) updateData.posterUrl = data.posterUrl;
+    if (data.status !== undefined) updateData.status = data.status as typeof events.status.enumValues[number];
+
     await db.transaction(async (tx) => {
       // Update event
       if (Object.keys(updateData).length > 0) {
@@ -213,40 +222,47 @@ export async function updateEvent(id: string, data: UpdateEventInput) {
     return { success: true };
   } catch (error) {
     console.error("Error updating event:", error);
-    const message = error instanceof Error ? error.message : "Gagal mengupdate event";
-    throw new Error(message);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Gagal mengupdate event"
+    };
   }
 }
 
 // ─── DELETE EVENT ─────────────────────────────────────────────────────────────
 
-export async function deleteEvent(id: string) {
-  const session = await requireAuth();
-
-  // Check ownership
-  const existingEvent = await requireEventOwner(id, session.user.id);
-
-  // Validasi hanya bisa hapus jika status draft
-  if (existingEvent.status !== "draft") {
-    throw new Error("Hanya event dengan status draft yang bisa dihapus");
-  }
-
-  // Validasi soldCount semua ticketTypes = 0
-  // Note: existingEvent from requireEventOwner doesn't have ticketTypes by default in our helper, 
-  // but we should check it. Let's fetch ticket types here.
-  const tickets = await db.select().from(ticketTypes).where(eq(ticketTypes.eventId, id));
-  const hasSoldTickets = tickets.some((tt) => tt.soldCount > 0);
-  if (hasSoldTickets) {
-    throw new Error("Tidak bisa menghapus event yang sudah memiliki penjualan tiket");
-  }
-
+export async function deleteEvent(
+  id: string
+): Promise<{ success: true } | { success: false; error: string }> {
   try {
+    const session = await requireAuth();
+
+    // Check ownership
+    const existingEvent = await requireEventOwner(id, session.user.id);
+
+    // Validasi hanya bisa hapus jika status draft
+    if (existingEvent.status !== "draft") {
+      return { success: false, error: "Hanya event dengan status draft yang bisa dihapus" };
+    }
+
+    // Validasi soldCount semua ticketTypes = 0
+    // Note: existingEvent from requireEventOwner doesn't have ticketTypes by default in our helper, 
+    // but we should check it. Let's fetch ticket types here.
+    const tickets = await db.select().from(ticketTypes).where(eq(ticketTypes.eventId, id));
+    const hasSoldTickets = tickets.some((tt) => tt.soldCount > 0);
+    if (hasSoldTickets) {
+      return { success: false, error: "Tidak bisa menghapus event yang sudah memiliki penjualan tiket" };
+    }
+
     await db.delete(events).where(eq(events.id, id));
 
     revalidatePath("/dashboard/events");
     return { success: true };
   } catch (error) {
     console.error("Error deleting event:", error);
-    throw new Error("Gagal menghapus event");
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Gagal menghapus event"
+    };
   }
 }

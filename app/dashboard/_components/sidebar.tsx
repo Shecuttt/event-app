@@ -9,9 +9,16 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { signOut } from "next-auth/react";
 
 interface DashboardSidebarProps {
   children: ReactNode;
@@ -40,18 +47,31 @@ export function DashboardSidebar({ children, user }: DashboardSidebarProps) {
         {children}
       </SidebarContent>
       <SidebarFooter className="p-4">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <Avatar className="h-8 w-8 shrink-0">
-            <AvatarImage src={user.image || ""} alt={user.name || ""} />
-            <AvatarFallback>
-              <User className="h-4 w-4" />
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
-            <p className="text-sm font-medium truncate">{user.name || "User"}</p>
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-          </div>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger render={
+            <button className="flex w-full items-center gap-3 overflow-hidden rounded-lg p-1 text-left outline-none hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer transition-colors">
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarImage src={user.image || ""} alt={user.name || ""} />
+                <AvatarFallback>
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
+                <p className="text-sm font-medium truncate">{user.name || "User"}</p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              </div>
+            </button>
+          } />
+          <DropdownMenuContent className="w-56" align="end" side="right">
+            <DropdownMenuItem 
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="text-destructive focus:bg-destructive/15 focus:text-destructive cursor-pointer"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
